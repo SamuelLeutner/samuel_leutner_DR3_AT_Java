@@ -1,21 +1,25 @@
 package org.example;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.javalin.Javalin;
-import org.example.controller.AlunoController;
-import org.example.dao.AlunoDAO;
-
+import io.javalin.json.JavalinJackson;
+import org.example.controller.TarefaController;
+import org.example.dao.TarefaDAO;
 import java.time.Instant;
 import java.util.Map;
 
 public class Main {
     public static void main(String[] args) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+
         Javalin app = Javalin.create(config -> {
-            config.jsonMapper(new io.javalin.json.JavalinJackson());
-            config.showJavalinBanner = false;
+            config.jsonMapper(new JavalinJackson());
         }).start(7000);
 
-        AlunoDAO alunoDAO = new AlunoDAO();
-        AlunoController alunoController = new AlunoController(alunoDAO);
+        TarefaDAO tarefaDAO = new TarefaDAO();
+        TarefaController tarefaController = new TarefaController(tarefaDAO);
 
         System.out.println("Servidor Javalin iniciado em http://localhost:7000");
 
@@ -29,21 +33,14 @@ public class Main {
             ctx.json(response);
         });
 
-        app.post("/echo", ctx -> {
-            Map<String, Object> jsonRequest = ctx.bodyAsClass(Map.class);
-            ctx.json(jsonRequest);
-        });
-
         app.get("/saudacao/{nome}", ctx -> {
             String nome = ctx.pathParam("nome");
             Map<String, String> response = Map.of("mensagem", "Olá, " + nome + "!");
             ctx.json(response);
         });
 
-        app.post("/alunos", alunoController::criar);
-
-        app.get("/alunos", alunoController::buscarTodos);
-
-        app.get("/alunos/{id}", alunoController::buscarPorId);
+        app.post("/tarefas", tarefaController::criar);
+        app.get("/tarefas", tarefaController::buscarTodas);
+        app.get("/tarefas/{id}", tarefaController::buscarPorId);
     }
 }

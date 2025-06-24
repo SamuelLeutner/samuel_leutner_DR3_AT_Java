@@ -11,27 +11,27 @@ public class ApiClient {
     private static final String BASE_URL = "http://localhost:7000";
 
     public static void main(String[] args) throws Exception {
-        System.out.println("--- 1. Criando novo aluno (POST /alunos) ---");
-        postAluno();
+        System.out.println("--- 1. Criando nova tarefa (POST /tarefas) ---");
+        postTarefa();
 
-        System.out.println("\n--- 2. Listando todos os alunos (GET /alunos) ---");
-        getAlunos();
+        System.out.println("\n--- 2. Listando todas as tarefas (GET /tarefas) ---");
+        getTarefas();
 
-        System.out.println("\n--- 3. Buscando aluno pelo ID=1 (GET /alunos/1) ---");
-        getAlunoPorId("1");
+        System.out.println("\n--- 3. Buscando tarefa pelo ID=1 (GET /tarefas/1) ---");
+        getTarefaPorId("1");
 
         System.out.println("\n--- 4. Buscando status da API (GET /status) ---");
         getStatus();
     }
 
-    public static void postAluno() throws Exception {
-        URL url = new URL(BASE_URL + "/alunos");
+    public static void postTarefa() throws Exception {
+        URL url = new URL(BASE_URL + "/tarefas");
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("POST");
         con.setRequestProperty("Content-Type", "application/json");
         con.setDoOutput(true);
 
-        String jsonInputString = "{\"nome\": \"Isaac Newton\", \"email\": \"newton@example.com\"}";
+        String jsonInputString = "{\"titulo\": \"Aprender Javalin\", \"descricao\": \"Criar uma API REST funcional.\"}";
 
         try (OutputStream os = con.getOutputStream()) {
             byte[] input = jsonInputString.getBytes(StandardCharsets.UTF_8);
@@ -46,8 +46,8 @@ public class ApiClient {
         con.disconnect();
     }
 
-    public static void getAlunos() throws Exception {
-        URL url = new URL(BASE_URL + "/alunos");
+    public static void getTarefas() throws Exception {
+        URL url = new URL(BASE_URL + "/tarefas");
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("GET");
 
@@ -56,8 +56,8 @@ public class ApiClient {
         con.disconnect();
     }
 
-    public static void getAlunoPorId(String id) throws Exception {
-        URL url = new URL(BASE_URL + "/alunos/" + id);
+    public static void getTarefaPorId(String id) throws Exception {
+        URL url = new URL(BASE_URL + "/tarefas/" + id);
         HttpURLConnection con = (HttpURLConnection) url.openConnection();
         con.setRequestMethod("GET");
 

@@ -1,10 +1,12 @@
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.javalin.Javalin;
+import io.javalin.json.JavalinJackson;
 import io.javalin.testtools.JavalinTest;
 import okhttp3.Response;
-import org.example.controller.AlunoController;
-import org.example.dao.AlunoDAO;
-import org.example.model.Aluno;
+import org.example.controller.TarefaController;
+import org.example.dao.TarefaDAO;
+import org.example.model.Tarefa;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,18 +15,21 @@ public class ApiTest {
     Javalin app = setupApp();
 
     private Javalin setupApp() {
-        Javalin app = Javalin.create(config -> config.jsonMapper(new io.javalin.json.JavalinJackson()));
-        AlunoDAO dao = new AlunoDAO();
-        AlunoController controller = new AlunoController(dao);
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+
+        Javalin app = Javalin.create(config -> config.jsonMapper(new JavalinJackson()));
+        TarefaDAO dao = new TarefaDAO();
+        TarefaController controller = new TarefaController(dao);
 
         app.get("/hello", ctx -> ctx.result("Hello, Javalin!"));
-        app.post("/alunos", controller::criar);
-        app.get("/alunos", controller::buscarTodos);
-        app.get("/alunos/{id}", controller::buscarPorId);
+        app.post("/tarefas", controller::criar);
+        app.get("/tarefas", controller::buscarTodas);
+        app.get("/tarefas/{id}", controller::buscarPorId);
         return app;
     }
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @Test
     void testHelloEndpoint() {
@@ -36,49 +41,51 @@ public class ApiTest {
     }
 
     @Test
-    void testCreateAluno() {
+    void testCreateTarefa() {
         JavalinTest.test(app, (server, client) -> {
-            String newAlunoJson = "{\"nome\": \"Marie Curie\", \"email\": \"marie@example.com\"}";
-            Response response = client.post("/alunos", newAlunoJson);
+            String newTarefaJson = "{\"titulo\": \"Testar API\", \"descricao\": \"Usar o JavalinTest para testar.\"}";
+            Response response = client.post("/tarefas", newTarefaJson);
 
             assertThat(response.code()).isEqualTo(201);
-            Aluno createdAluno = objectMapper.readValue(response.body().string(), Aluno.class);
-            assertThat(createdAluno.getNome()).isEqualTo("Marie Curie");
-            assertThat(createdAluno.getId()).isPositive();
+            Tarefa createdTarefa = objectMapper.readValue(response.body().string(), Tarefa.class);
+            assertThat(createdTarefa.getTitulo()).isEqualTo("Testar API");
+            assertThat(createdTarefa.getId()).isPositive();
+            assertThat(createdTarefa.isConcluida()).isFalse();
+            assertThat(createdTarefa.getDataCriacao()).isNotNull();
         });
     }
 
     @Test
-    void testGetAlunoById() {
+    void testGetTarefaById() {
         JavalinTest.test(app, (server, client) -> {
-            String newAlunoJson = "{\"nome\": \"Nikola Tesla\", \"email\": \"tesla@example.com\"}";
-            Response createResponse = client.post("/alunos", newAlunoJson);
-            Aluno createdAluno = objectMapper.readValue(createResponse.body().string(), Aluno.class);
-            long newId = createdAluno.getId();
+            String newTarefaJson = "{\"titulo\": \"Buscar por ID\", \"descricao\": \"Uma tarefa específica.\"}";
+            Response createResponse = client.post("/tarefas", newTarefaJson);
+            Tarefa createdTarefa = objectMapper.readValue(createResponse.body().string(), Tarefa.class);
+            long newId = createdTarefa.getId();
 
-            Response getResponse = client.get("/alunos/" + newId);
+            Response getResponse = client.get("/tarefas/" + newId);
             assertThat(getResponse.code()).isEqualTo(200);
-            Aluno fetchedAluno = objectMapper.readValue(getResponse.body().string(), Aluno.class);
-            assertThat(fetchedAluno.getNome()).isEqualTo("Nikola Tesla");
+            Tarefa fetchedTarefa = objectMapper.readValue(getResponse.body().string(), Tarefa.class);
+            assertThat(fetchedTarefa.getTitulo()).isEqualTo("Buscar por ID");
         });
     }
 
     @Test
-    void testGetAlunosList() {
+    void testGetTarefasList() {
         JavalinTest.test(app, (server, client) -> {
-            Response response = client.get("/alunos");
+            Response response = client.get("/tarefas");
             assertThat(response.code()).isEqualTo(200);
 
-            List<Aluno> alunos = objectMapper.readValue(response.body().string(),
-                    objectMapper.getTypeFactory().constructCollectionType(List.class, Aluno.class));
-            assertThat(alunos).isNotEmpty();
+            List<Tarefa> tarefas = objectMapper.readValue(response.body().string(),
+                    objectMapper.getTypeFactory().constructCollectionType(List.class, Tarefa.class));
+            assertThat(tarefas).isNotEmpty();
         });
     }
 
     @Test
-    void testGetAlunoNotFound() {
+    void testGetTarefaNotFound() {
         JavalinTest.test(app, (server, client) -> {
-            Response response = client.get("/alunos/9999");
+            Response response = client.get("/tarefas/9999");
             assertThat(response.code()).isEqualTo(404);
         });
     }
